@@ -1,14 +1,22 @@
 #!/run/current-system/sw/bin/bash
 
-# Get battery percentage
+# Get battery percentage and status
 battery_path="/sys/class/power_supply/macsmc-battery/capacity"
+status_path="/sys/class/power_supply/macsmc-battery/status"
+
 if [ -f "$battery_path" ]; then
     battery=$(cat "$battery_path")
+    if [ -f "$status_path" ]; then
+        battery_status=$(cat "$status_path")
+    fi
 else
     # Try common battery paths
-    for bat_path in /sys/class/power_supply/BAT*/capacity /sys/class/power_supply/*/capacity; do
-        if [ -f "$bat_path" ]; then
-            battery=$(cat "$bat_path")
+    for bat_dir in /sys/class/power_supply/BAT* /sys/class/power_supply/macsmc-battery; do
+        if [ -f "$bat_dir/capacity" ]; then
+            battery=$(cat "$bat_dir/capacity")
+            if [ -f "$bat_dir/status" ]; then
+                battery_status=$(cat "$bat_dir/status")
+            fi
             break
         fi
     done
@@ -31,14 +39,16 @@ fi
 if [ -z "$wifi_network" ]; then
     # Check if wlan0 is up as fallback
     if ip link show wlan0 2>/dev/null | grep -q "state UP"; then
-        wifi_network="connected"
+        wifi_network="wifi connected"
     else
-        wifi_network="disconnected"
+        wifi_network="wifi disconnected"
     fi
 fi
 
-# Add battery warning indicator
+# Add battery warning and charging indicators
 battery_warning=""
+charging_indicator=""
+
 if [ "$battery" != "N/A" ] && [ "$battery" -le 20 ]; then
     if [ "$battery" -le 10 ]; then
         battery_warning=" ⚠️ CRITICAL"
@@ -47,5 +57,9 @@ if [ "$battery" != "N/A" ] && [ "$battery" -le 20 ]; then
     fi
 fi
 
+if [ "$battery_status" = "Charging" ]; then
+    charging_indicator=" (charging)"
+fi
+
 # Print battery, date, and wifi network
-echo "battery: ${battery}%${battery_warning}, ${datetime}, ${wifi_network}"
+echo "battery: ${battery}%${battery_warning}${charging_indicator}, ${datetime}, ${wifi_network}"

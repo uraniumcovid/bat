@@ -11,8 +11,22 @@ while true; do
         battery=$(cat "$BATTERY_PATH")
         
         if [ "$battery" -le "$CRITICAL_LEVEL" ]; then
+            # Flash capslock LED rapidly for critical battery
+            for i in {1..6}; do
+                echo 1 | sudo tee /sys/class/leds/input3::capslock/brightness >/dev/null 2>&1
+                sleep 0.2
+                echo 0 | sudo tee /sys/class/leds/input3::capslock/brightness >/dev/null 2>&1
+                sleep 0.2
+            done
             notify-send -u critical "Critical Battery" "Battery at ${battery}%! Charge immediately!" 2>/dev/null || echo "CRITICAL: Battery at ${battery}%!"
         elif [ "$battery" -le "$WARNING_LEVEL" ]; then
+            # Flash capslock LED slowly for low battery
+            for i in {1..3}; do
+                echo 1 | sudo tee /sys/class/leds/input3::capslock/brightness >/dev/null 2>&1
+                sleep 0.5
+                echo 0 | sudo tee /sys/class/leds/input3::capslock/brightness >/dev/null 2>&1
+                sleep 0.5
+            done
             notify-send -u normal "Low Battery" "Battery at ${battery}%. Consider charging." 2>/dev/null || echo "WARNING: Battery at ${battery}%"
         fi
     fi

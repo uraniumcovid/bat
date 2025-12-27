@@ -1,0 +1,21 @@
+#!/run/current-system/sw/bin/bash
+
+# Flash capslock LED manually
+# Usage: flash-caps [number_of_flashes] [speed]
+# speed: fast (0.2s) or slow (0.5s), default is fast
+
+flashes=${1:-3}
+speed=${2:-fast}
+
+if [ "$speed" = "slow" ]; then
+    delay=0.5
+else
+    delay=0.2
+fi
+
+for i in $(seq 1 $flashes); do
+    echo 1 | sudo tee /sys/class/leds/input3::capslock/brightness >/dev/null 2>&1
+    sleep $delay
+    echo 0 | sudo tee /sys/class/leds/input3::capslock/brightness >/dev/null 2>&1
+    sleep $delay
+done
