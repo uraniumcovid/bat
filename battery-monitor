@@ -1,0 +1,21 @@
+#!/run/current-system/sw/bin/bash
+
+# Battery monitor script
+BATTERY_PATH="/sys/class/power_supply/macsmc-battery/capacity"
+WARNING_LEVEL=20
+CRITICAL_LEVEL=10
+CHECK_INTERVAL=300  # seconds (5 minutes)
+
+while true; do
+    if [ -f "$BATTERY_PATH" ]; then
+        battery=$(cat "$BATTERY_PATH")
+        
+        if [ "$battery" -le "$CRITICAL_LEVEL" ]; then
+            notify-send -u critical "Critical Battery" "Battery at ${battery}%! Charge immediately!" 2>/dev/null || echo "CRITICAL: Battery at ${battery}%!"
+        elif [ "$battery" -le "$WARNING_LEVEL" ]; then
+            notify-send -u normal "Low Battery" "Battery at ${battery}%. Consider charging." 2>/dev/null || echo "WARNING: Battery at ${battery}%"
+        fi
+    fi
+    
+    sleep "$CHECK_INTERVAL"
+done
